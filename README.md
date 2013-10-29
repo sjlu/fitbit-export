@@ -12,7 +12,7 @@ This helps you export your Fitbit data into a nice JSON file.
 
 * Then run the exporter.
 
-        ./fitbit/export.py > export.json
+        python export.py > export.json
 
 ## License
 
