@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>Fitbit Graph</title>
+  <style>
+    html, body, #chart {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+
+  <script type="text/javascript" src="jquery-1.10.2.min.js"></script>
+  <script type="text/javascript" src="lodash.underscore.min.js"></script>
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+    google.load('visualization', '1', {packages: ['corechart']});
+  </script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      var $container = $("#chart").get(0);
+      // $container.width = $(window).innerWidth;
+      // $container.height = $(window).innerHeight;
+
+      $.get('export.json', function(data) {
+        var days = [];
+        var weight = [];
+        var fat = [];
+
+        var previous_weight = 97.957;
+        var previous_fat = 27.658000946044922;
+        var chart_data = [["Day", "Fat", "Burned"]];
+
+        var average_intake = _.reduce(data, function(sum, day) {
+          console.log(day);
+          return sum + parseInt(day['foods-log-caloriesIn']);
+        }, 0) / data.length;
+
+        var average_burn = _.reduce(data, function(sum, day) {
+          return sum + parseInt(day['activities-calories']);
+        }, 0) / data.length;
+
+        console.log(average_intake);
+        console.log(average_burn);
+
+        _.map(data, function(day) {
+          chart_data.push([
+            day['date'],
+            // (day['body-weight'] - previous_weight)*2.20462,
+            (((day['body-fat']/100)*day['body-weight']) - ((previous_fat/100)*previous_weight))*2.20462,
+            ((day['foods-log-caloriesIn']-average_intake) - (day['activities-calories']-average_burn))/500
+          ]);
+          previous_weight = day['body-weight'];
+          previous_fat = day['body-fat'];
+
+        });
+
+        var options = {
+          title : '',
+          vAxis: {title: "Difference"},
+          hAxis: {title: "Day"},
+          seriesType: "bars",
+          series: {1: {type: "line"}}
+        };
+
+        var chart = new google.visualization.ComboChart(document.getElementById('chart'));
+        chart.draw(google.visualization.arrayToDataTable(chart_data), options)
+      });
+    });
+  </script>
+
+  <!-- This site was made with love from Steven Lu (stevenlu.com) -->
+</body>
+</html>
